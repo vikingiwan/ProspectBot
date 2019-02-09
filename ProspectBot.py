@@ -12,16 +12,17 @@ import sqlite3
 
 ##Variables & Objects##
 global VERSION
-VERSION = "0.1"
+VERSION = "0.2"
 global SERVER
-SERVER = "543621875285098496"
-global mainChannel
-mainChannel = "543621875285098499"
+SERVER = "507275577925828667"
+global botChannel
+botChannel = "543633717097267217"
 global botID
 botID = "543622344896282644"
 op_roles = []
-userCommands = ["roll", "flip", "remind", "addquote", "quote", "pfp", "info", "version"]
-operatorCommands = []
+commanderID = "142076624072867840"
+userCommands = ["transaction", "roll", "flip", "remind", "addquote", "quote", "pfp", "info", "version", "changelog"]
+operatorCommands = ["terminate"]
 killResponses = ["%s 'accidentally' fell in a ditch... RIP >:)", "Oh, %s did that food taste strange? Maybe it was.....*poisoned* :wink:", "I didn't mean to shoot %s, I swear the gun was unloaded!", "Hey %s, do me a favor? Put this rope around your neck and tell me if it feels uncomfortable.", "*stabs %s* heh.... *stabs again*....hehe, stabby stabby >:D", "%s fell into the ocean whilst holding an anvil...well that was stupid."]
 
 bot = commands.Bot(command_prefix="!")
@@ -51,6 +52,8 @@ def getTokens():
         botToken = config.get('Tokens', 'Bot')
         
 def isOp(member):
+    if member.id == commanderID:
+        return True
     for r in member.roles:
         if r.id in op_roles:
             return True
@@ -63,12 +66,41 @@ def debug(msg):
         
 def create_tables():
     cur.execute('''CREATE TABLE IF NOT EXISTS transactions
-                     (user TEXT, trans TEXT, location TEXT)''')
+                     (user TEXT, trans INT, location TEXT)''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS quoteList
                      (QUOTES TEXT)''')
                      
-                     
+def register_quote(usr, quote):
+    quote = usr.display_name + ': "' + quote + '"'
+    cur.execute("INSERT INTO quoteList (quotes) VALUES (?)", (quote,))
+    connection.commit()
+    
+def load_quotes():
+    print("Loading Quotes...")
+    cur.execute('''SELECT * FROM quoteList''')
+    global quotes
+    quotes = cur.fetchall()
+def get_quote():
+    quote = random.choice(quotes)
+    quote = str(quote)
+    quote = quote.strip("('',)")
+    return quote
+    
+def get_changelog(ver):
+    with open ('changelogs/' + ver + '.txt', 'r') as changelog:
+        changelog = changelog.read()
+        changelog = changelog.splitlines()
+    changelog = str(changelog)
+    changelog = changelog.replace("',", "\n")
+    changelog = changelog.split("['],")
+    return changelog
+    
+def register_transaction(usr, trans, loc):
+    usr = usr.display_name
+    cur.execute("INSERT INTO transactions (user, trans, location) VALUES (?, ?, ?)", (usr, trans, loc))
+    connection.commit()
+ 
 #Bot Events
 @bot.event
 async def on_ready():
@@ -76,10 +108,21 @@ async def on_ready():
     print("ID: " + bot.user.id)
     print("------------------")
     await bot.change_presence(game=discord.Game(name="on a steel horse"))
-    _chan = bot.get_server(SERVER).get_channel(mainChannel)
-    await bot.send_message(_chan, "ProspectBot v" + VERSION + " coming online...")
+    #_chan = bot.get_server(SERVER).get_channel(botChannel)
+    #await bot.send_message(_chan, "ProspectBot v" + VERSION + " coming online...")
     
 
+#OPERATOR-ONLY COMMANDS
+@bot.command(pass_context = True)
+async def terminate(ctx):
+    if isOp(ctx.message.author) == True:
+        await bot.say("ProspectBot going offline...")
+        await bot.change_presence(status=discord.Status.offline)
+        sys.exit()
+    else:
+        await bot.say("ERROR: UNAUTHORIZED!")
+    
+    
 #USER COMMANDS
 @bot.command(pass_context = True)
 async def help(ctx):
@@ -97,7 +140,13 @@ async def help(ctx):
 @bot.command()
 async def version():
     await bot.say("I am currently on version " + VERSION)
-        
+      
+@bot.command(pass_context = True)
+async def changelog(ctx, ver: str=VERSION):
+    await bot.say("Changelog for version " + ver + ":")
+    for x in get_changelog(ver):
+        await bot.say("`" + str(x).strip("['],").replace("'", "") + "`")
+      
 @bot.command()
 async def roll(dice : str=None):
     if dice == None:
@@ -185,10 +234,21 @@ async def kill (ctx, *, member: discord.Member = None):
         random.seed(time.time())
         choice = killResponses[random.randrange(len(killResponses))] % member.mention
         await bot.say(choice)
+        
+
+@bot.command(pass_context = True)
+async def transaction(ctx, trans: int=None, *, loc: str=None):
+    user = ctx.message.author
+    await bot.delete_message(ctx.message)
+    if trans == None or loc == None:
+        await bot.say(ctx.message.author.mention + "-" + "Error: you're missing a required field!" + "\n" + "Examples: `!transaction 10520 carson` `!transaction -20000 paleto`")
+    else:
+        register_transaction(user, trans, loc)
+        await bot.say("Transaction Logged.")
 
 
 
-    
+
 #Runtime, baby! Let's go!    
 print ('Getting ready...')
 print('Loading ProspectBot v' + VERSION)

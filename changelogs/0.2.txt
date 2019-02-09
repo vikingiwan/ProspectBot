@@ -1,0 +1,4 @@
+-Added Quoting funtionality with the !quote and !addquote commands
+-Implemented changelog system
+-Added termination function
+-Added framework for treasury system
