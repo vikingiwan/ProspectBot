@@ -100,6 +100,16 @@ def register_transaction(usr, trans, loc):
     usr = usr.display_name
     cur.execute("INSERT INTO transactions (user, trans, location) VALUES (?, ?, ?)", (usr, trans, loc))
     connection.commit()
+    
+def get_translog(usr):
+    usr = usr.display_name
+    cur.execute("SELECT user, trans, location FROM transactions WHERE user = (?)", (usr,))
+    translog = str(cur.fetchall())
+    translog = translog.strip("[(',)]")
+    translog = translog.replace(", (", "")
+    translog = translog.replace(")", "\n")
+    translog = "Transaction History for " + usr + ": " + "\n" + translog
+    return translog
  
 #Bot Events
 @bot.event
@@ -172,9 +182,9 @@ async def flip(ctx):
         await bot.say(ctx.message.author.mention + ": the result is.......**TAILS**!")
       
 @bot.group(pass_context = True)
-async def remind(ctx, time: str = "0", *, reminder: str="null"):
+async def remind(ctx, time: str = "0", *, reminder: str=None):
     time = int(time)
-    if time == 0 or reminder == "null":
+    if time == 0 or reminder == None:
         await bot.say("Correct Usage: !remind <time in minutes> <reminder>")
         await bot.say("Example: !remind 5 Tell me how reminders work")
         return
@@ -245,6 +255,11 @@ async def transaction(ctx, trans: int=None, *, loc: str=None):
     else:
         register_transaction(user, trans, loc)
         await bot.say("Transaction Logged.")
+        
+@bot.command(pass_context = True)
+async def translog(ctx, user: discord.Member=None):
+    if user==None:
+        await bot.send_message(ctx.message.author, get_translog(ctx.message.author))
 
 
 
