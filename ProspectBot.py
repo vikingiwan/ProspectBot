@@ -9,12 +9,15 @@ import time
 import configparser
 import os
 import sqlite3
+from cleverwrap import CleverWrap
 
 ##Variables & Objects##
 
 #Globals
 global VERSION
-VERSION = "0.2"
+VERSION = "0.3"
+global DEBUG
+DEBUG = True
 global SERVER
 SERVER = "507275577925828667"
 global botChannel
@@ -46,6 +49,7 @@ def getTokens():
         print("Creating one now.")
         config.add_section("Tokens")
         config.set("Tokens", "Bot", "null")
+        config.set("Tokens", "Cleverbot", "null")
         with open ('tokens.cfg', 'w') as configfile:
             config.write(configfile)
         print("File created.")
@@ -55,6 +59,8 @@ def getTokens():
         config.read('tokens.cfg')
         global botToken
         botToken = config.get('Tokens', 'Bot')
+        global cb
+        cb = CleverWrap(config.get('Tokens', 'Cleverbot'))
         
 def isOp(member):
     if member.id == commanderID:
@@ -137,6 +143,14 @@ async def terminate(ctx):
     else:
         await bot.say("ERROR: UNAUTHORIZED!")
     
+@bot.command(pass_context = True)
+async def botFight(ctx):
+    if isOp(ctx.message.author) == True:
+        await bot.say("As you wish...I will now fight myself.")
+        await asyncio.sleep(3)
+        await bot.say(ctx.message.server.get_member(botID).mention + " Let's Fight.")
+    else:
+        await bot.say("ERROR: UNAUTHORIZED!")
     
 #USER COMMANDS
 @bot.command(pass_context = True)
@@ -204,7 +218,7 @@ async def addquote(ctx, member: discord.Member = None, *, quote: str=None):
     if member == None or quote == None:
         await bot.say("You must mention a user and add a quote!")
         await bot.say("Example: `!addquote @Iwan I love quotes`")
-    elif member.id == botID:
+    elif member.id == botID and isOp(ctx.message.author) == False:
         await bot.say("ERROR: UNAUTHORIZED! You are not allowed to quote me. Muahahaha!")
         return
     else:
@@ -267,7 +281,21 @@ async def translog(ctx, user: discord.Member=None):
         await bot.send_message(ctx.message.author, get_translog(ctx.message.author))
 
 
-
+#Cleverbot integration
+@bot.event
+async def on_message(message):
+    await bot.process_commands(message)
+    if message.content.startswith(message.server.get_member(botID).mention):
+        await bot.send_typing(message.channel)
+        stripmsg = message.content.replace('ProspectBot, ', "")
+        stripmsg = stripmsg.strip(str(message.server.get_member(botID).mention))
+        stripmsg = stripmsg.strip("@")
+        stripmsg = stripmsg.strip("<")
+        stripmsg = stripmsg.strip(">")
+        debug("Saying to CB: " + stripmsg)
+        botmsg = cb.say(stripmsg)
+        await bot.send_message(message.channel, message.author.mention + ': ' + botmsg)
+        
 
 #Runtime, baby! Let's go!    
 print ('Getting ready...')
