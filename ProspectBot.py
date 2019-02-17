@@ -11,6 +11,8 @@ import os
 import sqlite3
 
 ##Variables & Objects##
+
+#Globals
 global VERSION
 VERSION = "0.2"
 global SERVER
@@ -19,12 +21,15 @@ global botChannel
 botChannel = "543633717097267217"
 global botID
 botID = "543622344896282644"
+
+#Vars
 op_roles = []
 commanderID = "142076624072867840"
 userCommands = ["transaction", "roll", "flip", "remind", "addquote", "quote", "pfp", "info", "version", "changelog"]
 operatorCommands = ["terminate"]
 killResponses = ["%s 'accidentally' fell in a ditch... RIP >:)", "Oh, %s did that food taste strange? Maybe it was.....*poisoned* :wink:", "I didn't mean to shoot %s, I swear the gun was unloaded!", "Hey %s, do me a favor? Put this rope around your neck and tell me if it feels uncomfortable.", "*stabs %s* heh.... *stabs again*....hehe, stabby stabby >:D", "%s fell into the ocean whilst holding an anvil...well that was stupid."]
 
+#Objs
 bot = commands.Bot(command_prefix="!")
 connection = sqlite3.connect('LostData.db')
 cur = connection.cursor()
@@ -269,4 +274,5 @@ print ('Getting ready...')
 print('Loading ProspectBot v' + VERSION)
 getTokens()
 create_tables()
+load_quotes()
 bot.run(botToken)
