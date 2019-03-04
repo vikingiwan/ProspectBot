@@ -14,21 +14,17 @@ from cleverwrap import CleverWrap
 ##Variables & Objects##
 
 #Globals
-global VERSION
-VERSION = "0.3"
-global DEBUG
+VERSION = "0.4"
 DEBUG = True
-global SERVER
 SERVER = "507275577925828667"
-global botChannel
 botChannel = "543633717097267217"
-global botID
 botID = "543622344896282644"
+blankDeck = list(())
 
 #Vars
 op_roles = []
 commanderID = "142076624072867840"
-userCommands = ["transaction", "roll", "flip", "remind", "addquote", "quote", "pfp", "info", "version", "changelog"]
+userCommands = ["startpokerrun", "draw", "roll", "flip", "remind", "addquote", "quote", "pfp", "info", "version", "changelog"]
 operatorCommands = ["terminate"]
 killResponses = ["%s 'accidentally' fell in a ditch... RIP >:)", "Oh, %s did that food taste strange? Maybe it was.....*poisoned* :wink:", "I didn't mean to shoot %s, I swear the gun was unloaded!", "Hey %s, do me a favor? Put this rope around your neck and tell me if it feels uncomfortable.", "*stabs %s* heh.... *stabs again*....hehe, stabby stabby >:D", "%s fell into the ocean whilst holding an anvil...well that was stupid."]
 
@@ -121,6 +117,30 @@ def get_translog(usr):
     translog = translog.replace(")", "\n")
     translog = "Transaction History for " + usr + ": " + "\n" + translog
     return translog
+    
+def startPokerRun(chan, deck):
+    print("Starting Poker run!")
+    print("Clearing old deck...")
+    deck.clear()
+    print("Building new deck...")
+    rank = ['A','2','3','4','5','6','7','8','9','10','J','K','Q']
+    suit = [':clubs:',':hearts:',':diamonds:',':spades:']
+    for x in rank:
+        for y in suit:
+            card = x + y
+            deck.append(card)
+            print(card)
+    print("Deck built.")
+    return deck
+    
+def drawCard(deck):
+    if deck:
+        card = random.choice(deck)
+        deck.remove(card)
+        return card
+    else:
+        return None
+   
  
 #Bot Events
 @bot.event
@@ -279,7 +299,24 @@ async def transaction(ctx, trans: int=None, *, loc: str=None):
 async def translog(ctx, user: discord.Member=None):
     if user==None:
         await bot.send_message(ctx.message.author, get_translog(ctx.message.author))
+        
+        
+@bot.command(pass_context = True)
+async def startpokerrun(ctx):
+    global deck
+    deck = startPokerRun(ctx.message.channel, blankDeck)
+    msg = "\nA poker run is starting!\nRemember to use `!draw` to draw a card!"
+    em = discord.Embed(title='', description=msg, colour=0xFF0000)
+    em.set_author(name='Poker Run:', icon_url="https://i.imgur.com/2r4ARoe.jpg")
+    await bot.send_message(ctx.message.channel, embed=em)
 
+@bot.command(pass_context = True)
+async def draw(ctx):
+    card = drawCard(deck)
+    if card == None:
+        await bot.say("Deck is empty!")
+    else:
+        await bot.say(ctx.message.author.mention + " drew: " + card)
 
 #Cleverbot integration
 @bot.event
