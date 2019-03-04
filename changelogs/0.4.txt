@@ -1,1 +1,2 @@
 -Added Poker Run functionality
+-Fixed crash on drawing from empty deck

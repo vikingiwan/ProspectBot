@@ -312,11 +312,14 @@ async def startpokerrun(ctx):
 
 @bot.command(pass_context = True)
 async def draw(ctx):
-    card = drawCard(deck)
-    if card == None:
-        await bot.say("Deck is empty!")
-    else:
-        await bot.say(ctx.message.author.mention + " drew: " + card)
+    try:
+        card = drawCard(deck)
+        if card == None:
+            await bot.say("Deck is empty! Build a new one with `!startpokerrun`")
+        else:
+            await bot.say(ctx.message.author.mention + " drew: " + card)
+    except NameError:
+        await bot.say("Deck is empty! Build a new one with `!startpokerrun`")
 
 #Cleverbot integration
 @bot.event
