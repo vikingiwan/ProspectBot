@@ -1,2 +1,3 @@
 -Added Poker Run functionality
 -Fixed crash on drawing from empty deck
+-Added join/leave messages and added rank assign on join

@@ -19,6 +19,7 @@ DEBUG = True
 SERVER = "507275577925828667"
 botChannel = "543633717097267217"
 botID = "543622344896282644"
+inoutChan = "514626001716903965"
 blankDeck = list(())
 
 #Vars
@@ -321,6 +322,22 @@ async def draw(ctx):
     except NameError:
         await bot.say("Deck is empty! Build a new one with `!startpokerrun`")
 
+
+@bot.event
+async def on_member_join(member):
+    print(member.name + " has joined the server...assigning rank...")
+    _role = discord.utils.get(bot.get_server(SERVER).roles, name="Associate")
+    await bot.add_roles(member, _role)
+    print("Role added to " + member.name)
+    _chan = bot.get_server(SERVER).get_channel(inoutChan)
+    await bot.send_message(_chan, ":thumbsup: " + member.mention + " has checked into LOXSTEEL'S Resort and Spa.")
+    
+@bot.event
+async def on_member_remove(member):
+    _chan = bot.get_server(SERVER).get_channel(inoutChan)
+    await bot.send_message(_chan, ":thumbsdown: " + member.name + " has checked out of LOXSTEEL'S Resort and Spa.")        
+        
+        
 #Cleverbot integration
 @bot.event
 async def on_message(message):
